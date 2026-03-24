@@ -1,0 +1,33 @@
+name: CI
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.11"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "${{ matrix.python-version }}", cache: "pip"}
+      - run: pip install numpy pandas scipy networkx pytest pytest-cov ruff PyYAML
+      - run: ruff check src/ tests/
+      - run: pytest tests/ -v --cov=src --cov-report=xml
+      - uses: codecov/codecov-action@v4
+        with: {file: ./coverage.xml, fail_ci_if_error: false}
+
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.11", cache: "pip"}
+      - run: pip install numpy pandas scipy networkx PyYAML
+      - run: python src/data/project_generator.py --type residential --output /tmp/p.json
+      - run: python src/schedule/cpm.py
+      - run: python src/risk/monte_carlo.py --project /tmp/p.json --simulations 200

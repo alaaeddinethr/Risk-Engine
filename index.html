@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Construction Risk Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:ital,wght@0,400;0,500;0,700;1,400&family=Overpass+Mono:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --paper:#f0ede6;
+  --paper2:#e8e3d9;
+  --paper3:#ddd7cb;
+  --ink:#1c1810;
+  --ink2:#4a4435;
+  --ink3:#8a7e6a;
+  --ink4:#b8ad99;
+  --rust:#8b3a1a;
+  --rust-l:#c45520;
+  --rust-bg:#f5ece6;
+  --navy:#1e2f4a;
+  --navy-l:#2d4875;
+  --navy-bg:#e8edf5;
+  --green:#1a5c35;
+  --green-l:#2a8a50;
+  --green-bg:#e6f2eb;
+  --amber:#7a4f0a;
+  --amber-l:#b87818;
+  --amber-bg:#f5f0dc;
+  --border:#c8bfaa;
+  --border2:#ddd5c4;
+  --mono:'Overpass Mono',monospace;
+  --sans:'Familjen Grotesk',sans-serif;
+}
+html{scroll-behavior:smooth}
+body{
+  background:var(--paper);
+  color:var(--ink);
+  font-family:var(--sans);
+  font-size:16px;
+  line-height:1.65;
+}
+
+/* ── Blueprint cross-hatch border ── */
+.blueprint-border{
+  border:2px solid var(--navy);
+  padding:3px;
+}
+.blueprint-border::before{
+  content:'';display:block;
+  border:1px dashed var(--border);
+  pointer-events:none;
+}
+
+/* ── NAV ── */
+nav{
+  position:sticky;top:0;z-index:100;
+  background:var(--navy);
+  height:52px;display:flex;align-items:center;justify-content:space-between;
+  padding:0 2.5rem;
+  border-bottom:3px solid var(--rust-l);
+}
+.nav-logo{
+  font-family:var(--mono);font-size:.82rem;
+  color:#fff;letter-spacing:.06em;
+  display:flex;align-items:center;gap:.6rem;
+}
+.nav-logo::before{content:'▲';font-size:.6rem;color:var(--rust-l)}
+.nav-links{display:flex;gap:2rem;list-style:none}
+.nav-links a{
+  font-family:var(--mono);font-size:.68rem;color:rgba(255,255,255,.55);
+  text-decoration:none;letter-spacing:.1em;text-transform:uppercase;
+  transition:color .2s;
+}
+.nav-links a:hover{color:#fff}
+.nav-cta{
+  font-family:var(--mono);font-size:.7rem;
+  padding:.35rem .9rem;border:1px solid rgba(255,255,255,.3);
+  color:#fff;text-decoration:none;transition:all .2s;
+}
+.nav-cta:hover{background:#fff;color:var(--navy)}
+
+/* ── HERO ── */
+#hero{
+  display:grid;grid-template-columns:1fr 1fr;
+  min-height:calc(100vh - 52px);
+  border-bottom:1px solid var(--border);
+}
+.hero-left{
+  padding:5rem 3rem 5rem 4rem;
+  display:flex;flex-direction:column;justify-content:center;
+  border-right:1px solid var(--border);
+  background:var(--navy);
+  color:#fff;
+}
+.hero-tag{
+  font-family:var(--mono);font-size:.65rem;letter-spacing:.2em;
+  color:var(--rust-l);display:flex;align-items:center;gap:.6rem;
+  margin-bottom:2rem;
+}
+.hero-tag::before{content:'';width:2rem;height:1px;background:var(--rust-l)}
+h1{
+  font-family:var(--sans);font-size:clamp(2.6rem,5vw,4.8rem);
+  font-weight:700;line-height:1.05;letter-spacing:-.02em;
+  margin-bottom:1.5rem;
+}
+h1 em{font-style:normal;color:var(--rust-l)}
+.hero-sub{
+  font-size:1rem;color:rgba(255,255,255,.65);
+  max-width:440px;line-height:1.8;margin-bottom:2.5rem;font-weight:400;
+}
+.hero-ctas{display:flex;gap:1rem;flex-wrap:wrap}
+.btn{
+  font-family:var(--mono);font-size:.75rem;letter-spacing:.06em;
+  padding:.7rem 1.6rem;text-decoration:none;transition:all .2s;
+  display:inline-flex;align-items:center;gap:.5rem;
+}
+.btn-primary{background:var(--rust-l);color:#fff;border:1px solid var(--rust-l)}
+.btn-primary:hover{background:var(--rust);border-color:var(--rust)}
+.btn-ghost{border:1px solid rgba(255,255,255,.25);color:rgba(255,255,255,.75)}
+.btn-ghost:hover{border-color:#fff;color:#fff}
+
+/* Hero right — project data panel */
+.hero-right{
+  background:var(--paper2);
+  display:flex;flex-direction:column;
+  padding:2.5rem;gap:1.5rem;
+}
+.data-block{
+  background:var(--paper);border:1px solid var(--border);
+  padding:1.2rem 1.5rem;
+}
+.data-block-title{
+  font-family:var(--mono);font-size:.6rem;letter-spacing:.15em;text-transform:uppercase;
+  color:var(--ink3);border-bottom:1px solid var(--border2);
+  padding-bottom:.4rem;margin-bottom:.8rem;
+}
+/* Risk score gauge */
+.risk-gauge{
+  display:flex;align-items:center;gap:1.5rem;
+}
+.gauge-num{
+  font-family:var(--mono);font-size:3.5rem;font-weight:600;
+  color:var(--rust-l);line-height:1;
+}
+.gauge-legend{display:flex;flex-direction:column;gap:.3rem}
+.legend-item{
+  display:flex;align-items:center;gap:.5rem;
+  font-family:var(--mono);font-size:.65rem;color:var(--ink3);
+}
+.legend-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+/* Mini Gantt */
+.mini-gantt{display:flex;flex-direction:column;gap:.3rem}
+.gantt-row{display:flex;align-items:center;gap:.5rem;font-family:var(--mono);font-size:.6rem}
+.gantt-label{width:85px;flex-shrink:0;color:var(--ink3);text-overflow:ellipsis;overflow:hidden;white-space:nowrap}
+.gantt-track{flex:1;height:12px;background:var(--paper2);border:1px solid var(--border2);overflow:hidden;position:relative}
+.gantt-bar{height:100%;position:absolute}
+.gantt-bar.critical{background:var(--rust-l)}
+.gantt-bar.normal{background:var(--navy-l);opacity:.65}
+/* Risk VaR display */
+.var-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.5rem}
+.var-cell{background:var(--paper2);padding:.6rem .8rem;border:1px solid var(--border2)}
+.var-label{font-family:var(--mono);font-size:.55rem;color:var(--ink4);letter-spacing:.08em;margin-bottom:.2rem}
+.var-val{font-family:var(--mono);font-size:.95rem;font-weight:600;color:var(--ink)}
+.var-val.risk{color:var(--rust-l)}
+
+/* ── SECTIONS ── */
+section{padding:5.5rem 2.5rem}
+.container{max-width:1080px;margin:0 auto}
+.eyebrow{
+  font-family:var(--mono);font-size:.65rem;letter-spacing:.2em;
+  color:var(--rust-l);display:flex;align-items:center;gap:.6rem;
+  margin-bottom:1.1rem;text-transform:uppercase;
+}
+.eyebrow::before{content:'//';color:var(--border)}
+h2{
+  font-family:var(--sans);font-size:clamp(1.9rem,3.5vw,2.9rem);
+  font-weight:700;letter-spacing:-.02em;margin-bottom:1rem;
+}
+.text-dim{color:var(--ink3)}
+hr.rule{border:none;border-top:1px solid var(--border2);margin:0}
+
+/* ── FORMULA SECTION ── */
+#formula{background:var(--paper2);border-bottom:1px solid var(--border)}
+.formula-layout{display:grid;grid-template-columns:1fr 1fr;gap:3.5rem;margin-top:3rem;align-items:start}
+.formula-code{
+  background:var(--navy);color:#c8d8f0;
+  font-family:var(--mono);font-size:.78rem;line-height:2;
+  padding:1.5rem 1.8rem;border-left:4px solid var(--rust-l);
+}
+.fc-hl{color:#ff9966}.fc-g{color:#66cc88}.fc-b{color:#88aaff}.fc-c{color:#668899}
+.formula-text p{color:var(--ink2);margin-bottom:.9rem;line-height:1.8;font-size:.95rem}
+.formula-text blockquote{
+  border-left:3px solid var(--amber-l);padding:.7rem 1rem;
+  background:var(--amber-bg);font-style:italic;
+  font-size:.88rem;color:var(--ink2);margin:1rem 0;
+}
+.formula-text blockquote cite{
+  font-style:normal;font-family:var(--mono);font-size:.62rem;
+  color:var(--ink3);display:block;margin-top:.4rem;
+}
+
+/* ── METHODS ── */
+#methods{background:var(--paper);border-bottom:1px solid var(--border)}
+.methods-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);border:1px solid var(--border);margin-top:3rem}
+.method-card{background:var(--paper);padding:1.8rem}
+.method-num{font-family:var(--mono);font-size:.6rem;color:var(--ink4);letter-spacing:.1em;margin-bottom:.5rem}
+.method-name{font-size:1.05rem;font-weight:700;margin-bottom:.4rem}
+.method-desc{font-size:.82rem;color:var(--ink3);line-height:1.65;margin-bottom:.8rem}
+.method-formula{
+  font-family:var(--mono);font-size:.7rem;color:var(--navy-l);
+  background:var(--navy-bg);padding:.5rem .8rem;
+  border-left:2px solid var(--navy-l);
+}
+
+/* ── OUTPUTS ── */
+#outputs{background:var(--paper2);border-bottom:1px solid var(--border)}
+.outputs-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);border:1px solid var(--border);margin-top:3rem}
+.output-tile{background:var(--paper);padding:1.5rem 1.2rem}
+.output-icon{font-family:var(--mono);font-size:.65rem;color:var(--rust-l);letter-spacing:.1em;margin-bottom:.5rem}
+.output-title{font-size:1rem;font-weight:700;margin-bottom:.3rem}
+.output-desc{font-size:.78rem;color:var(--ink3);line-height:1.6}
+
+/* ── RESULTS ── */
+#results{background:var(--paper);border-bottom:1px solid var(--border)}
+.results-layout{display:grid;grid-template-columns:1.2fr 1fr;gap:3rem;margin-top:3rem;align-items:start}
+.result-table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:.78rem}
+.result-table th{text-align:left;padding:.55rem .8rem;
+  font-size:.62rem;letter-spacing:.08em;text-transform:uppercase;color:var(--ink3);
+  border-bottom:2px solid var(--ink)}
+.result-table td{padding:.7rem .8rem;border-bottom:1px solid var(--border2);color:var(--ink2)}
+.result-table tr:last-child td{border-bottom:none}
+.result-table tr:hover td{background:var(--paper2)}
+.stat-pos{color:var(--green)}
+.stat-neg{color:var(--rust-l)}
+.note-box{
+  padding:1.1rem 1.3rem;background:var(--rust-bg);
+  border-left:3px solid var(--rust-l);
+  font-size:.83rem;color:var(--ink2);line-height:1.7;margin-top:1.2rem;
+}
+.note-box strong{color:var(--ink);font-weight:600}
+
+/* ── ARCHITECTURE ── */
+#architecture{background:var(--paper2);border-bottom:1px solid var(--border)}
+.arch-flow{display:grid;grid-template-columns:repeat(5,1fr);gap:0;margin-top:3rem;border:1px solid var(--border)}
+.arch-step{
+  padding:1.5rem 1.1rem;border-right:1px solid var(--border);
+  transition:background .2s;
+}
+.arch-step:last-child{border-right:none}
+.arch-step:hover{background:var(--paper)}
+.arch-tag{font-family:var(--mono);font-size:.58rem;color:var(--rust-l);letter-spacing:.1em;margin-bottom:.5rem}
+.arch-title{font-size:.95rem;font-weight:700;margin-bottom:.3rem}
+.arch-file{font-family:var(--mono);font-size:.6rem;color:var(--green-l);
+  background:var(--green-bg);padding:.2rem .5rem;display:inline-block;margin-bottom:.5rem}
+.arch-desc{font-size:.73rem;color:var(--ink3);line-height:1.6}
+
+/* ── QUICKSTART ── */
+#quickstart{background:var(--paper);border-bottom:1px solid var(--border)}
+.qs-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:2rem;margin-top:3rem}
+.qs-card{background:var(--paper2);border:1px solid var(--border);padding:1.5rem}
+.qs-num{font-family:var(--mono);font-size:.6rem;color:var(--rust-l);letter-spacing:.1em;margin-bottom:.8rem}
+.qs-card h3{font-size:1rem;font-weight:600;margin-bottom:.8rem}
+pre{
+  background:var(--navy);
+  padding:.9rem 1.1rem;overflow-x:auto;
+  font-family:var(--mono);font-size:.7rem;color:#b0c4de;line-height:1.7;
+}
+pre .g{color:#86efac}pre .y{color:#fcd34d}pre .b{color:#93c5fd}pre .c{color:#4d6a8f}
+
+/* ── AUTHOR ── */
+#author{background:var(--paper2);border-bottom:1px solid var(--border)}
+.author-grid{display:grid;grid-template-columns:1fr 2fr;gap:4rem;margin-top:3rem;align-items:start}
+.author-card{background:var(--paper);border:1px solid var(--border);border-top:4px solid var(--navy);padding:1.8rem}
+.author-initials{
+  width:60px;height:60px;background:var(--navy);
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.4rem;font-weight:700;color:#fff;margin-bottom:1rem;
+}
+.author-name{font-size:1.3rem;font-weight:700;margin-bottom:.2rem}
+.author-role{font-family:var(--mono);font-size:.65rem;color:var(--ink3);margin-bottom:1rem}
+.author-link{
+  font-family:var(--mono);font-size:.68rem;
+  padding:.4rem .9rem;border:1px solid var(--border);
+  color:var(--ink2);text-decoration:none;transition:all .2s;
+  display:inline-flex;align-items:center;gap:.4rem;margin-right:.5rem;margin-bottom:.5rem;
+}
+.author-link:hover{background:var(--navy);color:#fff;border-color:var(--navy)}
+.author-bio p{color:var(--ink2);margin-bottom:.8rem;line-height:1.8;font-size:.93rem}
+.badge{
+  display:flex;gap:.8rem;align-items:flex-start;
+  padding:.9rem 1.1rem;margin-top:.8rem;font-size:.83rem;
+}
+.badge.kac{background:var(--navy-bg);border-left:3px solid var(--navy-l);color:var(--ink2)}
+.badge.hack{background:var(--amber-bg);border-left:3px solid var(--amber-l);color:var(--ink2)}
+
+/* ── FOOTER ── */
+footer{
+  background:var(--navy);color:rgba(255,255,255,.5);
+  padding:1.5rem 2.5rem;font-family:var(--mono);font-size:.68rem;
+  display:flex;justify-content:space-between;align-items:center;
+}
+footer a{color:rgba(255,255,255,.5);text-decoration:none;transition:color .2s}
+footer a:hover{color:#fff}
+
+/* ── ANIMATIONS ── */
+.reveal{opacity:0;transform:translateY(12px);transition:opacity .55s ease,transform .55s ease}
+.reveal.visible{opacity:1;transform:translateY(0)}
+
+@media(max-width:900px){
+  #hero{grid-template-columns:1fr}.hero-right{display:none}
+  .formula-layout,.results-layout,.author-grid{grid-template-columns:1fr}
+  .methods-grid,.outputs-grid,.arch-flow,.qs-grid{grid-template-columns:1fr}
+  nav{padding:0 1rem}.nav-links{display:none}
+  section{padding:4rem 1.5rem}
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">construction-risk</div>
+  <ul class="nav-links">
+    <li><a href="#formula">Methods</a></li>
+    <li><a href="#methods">Algorithms</a></li>
+    <li><a href="#results">Results</a></li>
+    <li><a href="#architecture">Architecture</a></li>
+    <li><a href="#quickstart">Quickstart</a></li>
+  </ul>
+  <a href="https://github.com/alaaeddinethr/construction-risk" target="_blank" class="nav-cta">GitHub ↗</a>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="hero-left">
+    <div class="hero-tag">Construction · Project Risk · Monte Carlo</div>
+    <h1>Construction<br>Project<br><em>Risk Engine</em></h1>
+    <p class="hero-sub">
+      Quantitative risk analysis for construction projects — Beta-PERT schedule simulation,
+      Critical Path Method, Cost Overrun VaR, and Pareto sensitivity analysis.
+    </p>
+    <div class="hero-ctas">
+      <a href="https://github.com/alaaeddinethr/construction-risk" class="btn btn-primary" target="_blank">⬡ View on GitHub</a>
+      <a href="#formula" class="btn btn-ghost">Explore the Model →</a>
+    </div>
+  </div>
+  <div class="hero-right">
+    <!-- Risk Score -->
+    <div class="data-block">
+      <div class="data-block-title">PROJECT RISK SCORE — RÉSIDENTIEL R+3</div>
+      <div class="risk-gauge">
+        <div class="gauge-num">P.ON TIME</div>
+        <div class="gauge-legend">
+          <div class="legend-item"><div class="legend-dot" style="background:#8b3a1a"></div>Deadline: 200d | Baseline: 138d</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#1a5c35"></div>P(on time) = 97%</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#1e2f4a"></div>Cost VaR 95%: +5.3%</div>
+        </div>
+      </div>
+    </div>
+    <!-- Mini Gantt -->
+    <div class="data-block">
+      <div class="data-block-title">CRITICAL PATH — TOP TASKS</div>
+      <div class="mini-gantt">
+        <div class="gantt-row"><div class="gantt-label">Installation</div><div class="gantt-track"><div class="gantt-bar critical" style="left:0%;width:3.6%"></div></div></div>
+        <div class="gantt-row"><div class="gantt-label">Terrassement</div><div class="gantt-track"><div class="gantt-bar critical" style="left:3.6%;width:8.7%"></div></div></div>
+        <div class="gantt-row"><div class="gantt-label">Fondations</div><div class="gantt-track"><div class="gantt-bar critical" style="left:12.3%;width:10.9%"></div></div></div>
+        <div class="gantt-row"><div class="gantt-label">Voile RDC</div><div class="gantt-track"><div class="gantt-bar critical" style="left:23.2%;width:7.2%"></div></div></div>
+        <div class="gantt-row"><div class="gantt-label">Dalle RDC</div><div class="gantt-track"><div class="gantt-bar critical" style="left:30.4%;width:5.8%"></div></div></div>
+        <div class="gantt-row"><div class="gantt-label">Cloisons</div><div class="gantt-track"><div class="gantt-bar critical" style="left:36.2%;width:13%"></div></div></div>
+        <div class="gantt-row"><div class="gantt-label">Électricité</div><div class="gantt-track"><div class="gantt-bar critical" style="left:49.3%;width:12.3%"></div></div></div>
+        <div class="gantt-row"><div class="gantt-label">Voile R+1</div><div class="gantt-track"><div class="gantt-bar normal" style="left:36.2%;width:7.2%"></div></div></div>
+        <div class="gantt-row"><div class="gantt-label">Finitions</div><div class="gantt-track"><div class="gantt-bar critical" style="left:61.6%;width:15.9%"></div></div></div>
+        <div class="gantt-row"><div class="gantt-label">Réception</div><div class="gantt-track"><div class="gantt-bar critical" style="left:77.5%;width:5.1%"></div></div></div>
+      </div>
+      <div style="display:flex;gap:1rem;margin-top:.6rem;font-family:var(--mono);font-size:.58rem;color:var(--ink3)">
+        <span style="display:flex;align-items:center;gap:.3rem"><span style="width:10px;height:6px;background:var(--rust-l);display:inline-block"></span>Critical</span>
+        <span style="display:flex;align-items:center;gap:.3rem"><span style="width:10px;height:6px;background:var(--navy-l);opacity:.65;display:inline-block"></span>Non-critical (float &gt; 0)</span>
+      </div>
+    </div>
+    <!-- VaR summary -->
+    <div class="data-block">
+      <div class="data-block-title">RISK METRICS</div>
+      <div class="var-grid">
+        <div class="var-cell"><div class="var-label">P50 Completion</div><div class="var-val">+7d</div></div>
+        <div class="var-cell"><div class="var-label">P90 Completion</div><div class="var-val risk">+14d</div></div>
+        <div class="var-cell"><div class="var-label">Cost VaR 95%</div><div class="var-val risk">+5.3%</div></div>
+        <div class="var-cell"><div class="var-label">Top Critical Task</div><div class="var-val">Fondations</div></div>
+        <div class="var-cell"><div class="var-label">Criticality</div><div class="var-val">100%</div></div>
+        <div class="var-cell"><div class="var-label">Float (non-crit)</div><div class="var-val">33d max</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="rule">
+
+<!-- FORMULA -->
+<section id="formula">
+  <div class="container">
+    <div class="eyebrow">The Model</div>
+    <h2>Quantitative risk from 3-point estimates</h2>
+    <div class="formula-layout reveal">
+      <div class="formula-text">
+        <p>Construction projects are inherently uncertain — task durations depend on weather, labour availability, material delivery, and unforeseen site conditions. Deterministic CPM gives a single point estimate that is almost certainly wrong.</p>
+        <p>This engine replaces fixed durations with <strong>Beta-PERT probability distributions</strong> — each task is described by three estimates: optimistic, most likely, and pessimistic. Running CPM 10,000 times gives a full probability distribution of project completion.</p>
+        <blockquote>
+          "The PERT technique was developed for the Polaris missile program in 1957 and remains the standard for project schedule risk analysis."
+          <cite>— Malcolm et al. (1959). Operations Research, 7(5).</cite>
+        </blockquote>
+        <p>The Cost Overrun VaR applies the same Value-at-Risk methodology used in financial risk management — giving the maximum probable overrun at a given confidence level.</p>
+      </div>
+      <div class="formula-code reveal">
+<span class="fc-c">// Beta-PERT distribution</span><br>
+<span class="fc-hl">μ</span> = (O + <span class="fc-g">4</span>·M + P) / <span class="fc-g">6</span><br>
+<span class="fc-hl">σ</span> = (P - O) / <span class="fc-g">6</span><br>
+<span class="fc-c">// O=Optimistic M=MostLikely P=Pessimistic</span><br>
+<br>
+<span class="fc-c">// CPM Forward Pass</span><br>
+<span class="fc-b">ES</span>[i] = max( <span class="fc-b">EF</span>[pred] for pred in predecessors )<br>
+<span class="fc-b">EF</span>[i] = <span class="fc-b">ES</span>[i] + duration[i]<br>
+<br>
+<span class="fc-c">// Total Float (0 = critical)</span><br>
+<span class="fc-g">TF</span>[i] = <span class="fc-b">LS</span>[i] - <span class="fc-b">ES</span>[i]<br>
+<br>
+<span class="fc-c">// Cost Overrun VaR</span><br>
+<span class="fc-hl">CostVaR</span><sub>95</sub> = P95( simulated_cost ) - baseline<br>
+<br>
+<span class="fc-c">// Criticality Index</span><br>
+<span class="fc-g">CI</span>[i] = P( task i is on critical path )
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="rule">
+
+<!-- METHODS -->
+<section id="methods">
+  <div class="container">
+    <div class="eyebrow">Algorithms</div>
+    <h2>Three-layer risk pipeline</h2>
+    <div class="methods-grid reveal">
+      <div class="method-card">
+        <div class="method-num">01 —</div>
+        <div class="method-name">Beta-PERT Sampling</div>
+        <div class="method-desc">Each task's duration and cost are sampled from a Beta-PERT distribution fit to 3-point estimates. The Beta distribution is bounded, skewed, and parameterized by the mode — ideal for engineering durations.</div>
+        <div class="method-formula">α = (μ-O)/R · [(μ-O)(P-μ)/σ²-1]<br>samples ~ Beta(α,β) scaled to [O,P]</div>
+      </div>
+      <div class="method-card">
+        <div class="method-num">02 —</div>
+        <div class="method-name">CPM Schedule Propagation</div>
+        <div class="method-desc">For each set of sampled durations, a full CPM forward + backward pass computes Early/Late Start/Finish for every task. The critical path (zero float) is identified in each simulation.</div>
+        <div class="method-formula">EF[i] = ES[i] + d[i]<br>ES[i] = max(EF[pred])<br>TF[i] = LS[i] - ES[i]</div>
+      </div>
+      <div class="method-card">
+        <div class="method-num">03 —</div>
+        <div class="method-name">Risk Metrics Aggregation</div>
+        <div class="method-desc">Across 10,000 simulations: P50/P80/P90/P95 completion dates, cost overrun VaR, criticality index per task, and Spearman correlation for sensitivity analysis (tornado chart).</div>
+        <div class="method-formula">CI[i] = #{critical in sim i} / N<br>ρ[i] = Spearman(d[i], Proj_Duration)</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="rule">
+
+<!-- OUTPUTS -->
+<section id="outputs">
+  <div class="container">
+    <div class="eyebrow">Dashboard Outputs</div>
+    <h2>Everything a project manager needs</h2>
+    <div class="outputs-grid reveal">
+      <div class="output-tile">
+        <div class="output-icon">[ GANTT ]</div>
+        <div class="output-title">Baseline Gantt</div>
+        <div class="output-desc">Interactive Gantt chart with critical tasks highlighted. Float displayed per task. Deadline overlay.</div>
+      </div>
+      <div class="output-tile">
+        <div class="output-icon">[ MC ]</div>
+        <div class="output-title">Duration Distribution</div>
+        <div class="output-desc">Histogram of 10,000 simulated project durations. P50/P80/P90 lines. Probability of meeting deadline.</div>
+      </div>
+      <div class="output-tile">
+        <div class="output-icon">[ VaR ]</div>
+        <div class="output-title">Cost Risk</div>
+        <div class="output-desc">Cost overrun distribution. P90 and P95 cost estimates. Budget probability band. VaR in € and %.</div>
+      </div>
+      <div class="output-tile">
+        <div class="output-icon">[ CI ]</div>
+        <div class="output-title">Criticality Index</div>
+        <div class="output-desc">Per-task probability of being on the critical path. Ranked bar chart. Tasks with CI &gt;50% need active management.</div>
+      </div>
+      <div class="output-tile">
+        <div class="output-icon">[ TORNADO ]</div>
+        <div class="output-title">Sensitivity Analysis</div>
+        <div class="output-desc">Spearman correlation of each task's duration with total project duration and cost. Identifies key risk drivers.</div>
+      </div>
+      <div class="output-tile">
+        <div class="output-icon">[ TABLE ]</div>
+        <div class="output-title">Risk Register</div>
+        <div class="output-desc">Full task table with 3-point estimates, PERT means, criticality index, CPM float, and risk classification.</div>
+      </div>
+      <div class="output-tile">
+        <div class="output-icon">[ TYPES ]</div>
+        <div class="output-title">3 Project Templates</div>
+        <div class="output-desc">Residential (18 tasks), Commercial (28 tasks), Infrastructure/VRD (22 tasks) — all calibrated on real BTP norms.</div>
+      </div>
+      <div class="output-tile">
+        <div class="output-icon">[ CSV ]</div>
+        <div class="output-title">Import Your Project</div>
+        <div class="output-desc">The engine accepts any project as a JSON input — generate from templates or build your own with real site data.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="rule">
+
+<!-- RESULTS -->
+<section id="results">
+  <div class="container">
+    <div class="eyebrow">Sample Results</div>
+    <h2>Immeuble Résidentiel R+3 — 18 tasks</h2>
+    <p class="text-dim" style="margin-bottom:2rem;font-size:.9rem">10,000 Monte Carlo simulations · Beta-PERT durations · CPM dependency graph</p>
+    <div class="results-layout">
+      <div class="reveal">
+        <table class="result-table">
+          <thead><tr><th>Metric</th><th>Value</th><th>vs Baseline</th></tr></thead>
+          <tbody>
+            <tr><td colspan="3" style="font-weight:600;font-size:.78rem;background:var(--paper2)">SCHEDULE RISK</td></tr>
+            <tr><td>Baseline (CPM)</td><td>138 days</td><td>—</td></tr>
+            <tr><td>P50 Completion</td><td>145 days</td><td class="stat-neg">+7d</td></tr>
+            <tr><td>P80 Completion</td><td>150 days</td><td class="stat-neg">+12d</td></tr>
+            <tr><td>P90 Completion</td><td>153 days</td><td class="stat-neg">+15d</td></tr>
+            <tr><td>P95 Completion</td><td>157 days</td><td class="stat-neg">+19d</td></tr>
+            <tr><td>P(on time / 200d)</td><td>97%</td><td class="stat-pos">✓ comfortable</td></tr>
+            <tr><td colspan="3" style="font-weight:600;font-size:.78rem;background:var(--paper2)">COST RISK</td></tr>
+            <tr><td>Baseline cost</td><td>€452,000</td><td>—</td></tr>
+            <tr><td>P90 cost</td><td>€471,000</td><td class="stat-neg">+€19k</td></tr>
+            <tr><td>Cost VaR 95%</td><td>€476,000</td><td class="stat-neg">+€24k (+5.3%)</td></tr>
+            <tr><td>P(within budget)</td><td class="stat-pos">100%</td><td class="stat-pos">budget: €2.6M</td></tr>
+            <tr><td colspan="3" style="font-weight:600;font-size:.78rem;background:var(--paper2)">TOP CRITICAL TASKS</td></tr>
+            <tr><td>Fondations</td><td>CI = 100%</td><td class="stat-neg">Always critical</td></tr>
+            <tr><td>Maçonnerie cloisons</td><td>CI = 100%</td><td class="stat-neg">Always critical</td></tr>
+            <tr><td>Électricité CFO/CFA</td><td>CI = 100%</td><td class="stat-neg">Always critical</td></tr>
+            <tr><td>Plomberie sanitaire</td><td>CI = 42%</td><td class="stat-neg">Borderline</td></tr>
+          </tbody>
+        </table>
+        <div class="note-box">
+          <strong>Key finding:</strong> The tight sequence Fondations → Cloisons → Électricité → Carrelage → Menuiseries → Peinture is structurally critical. A 2-week delay in Fondations propagates to the final handover. Focus management attention here.
+        </div>
+      </div>
+      <div class="reveal">
+        <div style="background:var(--paper2);border:1px solid var(--border);padding:1.5rem">
+          <div style="font-family:var(--mono);font-size:.65rem;color:var(--ink3);margin-bottom:1rem;letter-spacing:.1em">SCHEDULE SENSITIVITY — SPEARMAN ρ</div>
+          <!-- Horizontal bars for sensitivity -->
+          <div style="display:flex;flex-direction:column;gap:.5rem">
+            <div style="font-family:var(--mono);font-size:.65rem">
+              <div style="display:flex;justify-content:space-between;margin-bottom:.2rem"><span>Fondations (T03)</span><span style="color:var(--rust-l)">ρ = 0.71</span></div>
+              <div style="height:6px;background:var(--border2)"><div style="width:71%;height:100%;background:var(--rust-l)"></div></div>
+            </div>
+            <div style="font-family:var(--mono);font-size:.65rem">
+              <div style="display:flex;justify-content:space-between;margin-bottom:.2rem"><span>Maçonnerie cloisons (T09)</span><span style="color:var(--rust-l)">ρ = 0.68</span></div>
+              <div style="height:6px;background:var(--border2)"><div style="width:68%;height:100%;background:var(--rust-l)"></div></div>
+            </div>
+            <div style="font-family:var(--mono);font-size:.65rem">
+              <div style="display:flex;justify-content:space-between;margin-bottom:.2rem"><span>Terrassement (T02)</span><span style="color:var(--rust-l)">ρ = 0.60</span></div>
+              <div style="height:6px;background:var(--border2)"><div style="width:60%;height:100%;background:var(--rust-l)"></div></div>
+            </div>
+            <div style="font-family:var(--mono);font-size:.65rem">
+              <div style="display:flex;justify-content:space-between;margin-bottom:.2rem"><span>Enduits & carrelage (T13)</span><span style="color:var(--amber-l)">ρ = 0.51</span></div>
+              <div style="height:6px;background:var(--border2)"><div style="width:51%;height:100%;background:var(--amber-l)"></div></div>
+            </div>
+            <div style="font-family:var(--mono);font-size:.65rem">
+              <div style="display:flex;justify-content:space-between;margin-bottom:.2rem"><span>Plomberie sanitaire (T10)</span><span style="color:var(--amber-l)">ρ = 0.38</span></div>
+              <div style="height:6px;background:var(--border2)"><div style="width:38%;height:100%;background:var(--amber-l)"></div></div>
+            </div>
+            <div style="font-family:var(--mono);font-size:.65rem">
+              <div style="display:flex;justify-content:space-between;margin-bottom:.2rem"><span>Peinture (T16)</span><span style="color:var(--navy-l)">ρ = 0.29</span></div>
+              <div style="height:6px;background:var(--border2)"><div style="width:29%;height:100%;background:var(--navy-l)"></div></div>
+            </div>
+            <div style="font-family:var(--mono);font-size:.65rem">
+              <div style="display:flex;justify-content:space-between;margin-bottom:.2rem"><span>Menuiseries int. (T15)</span><span style="color:var(--navy-l)">ρ = 0.22</span></div>
+              <div style="height:6px;background:var(--border2)"><div style="width:22%;height:100%;background:var(--navy-l)"></div></div>
+            </div>
+          </div>
+          <div style="margin-top:1rem;font-size:.72rem;color:var(--ink3);font-style:italic">
+            ρ = Spearman rank correlation between task duration sample and total project duration.
+            Higher ρ → task is a key schedule driver.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="rule">
+
+<!-- ARCHITECTURE -->
+<section id="architecture">
+  <div class="container">
+    <div class="eyebrow">Codebase</div>
+    <h2>5-module pipeline</h2>
+    <div class="arch-flow reveal">
+      <div class="arch-step">
+        <div class="arch-tag">[ DATA ]</div>
+        <div class="arch-title">Project Generator</div>
+        <div class="arch-file">project_generator.py</div>
+        <div class="arch-desc">3 project templates (residential, commercial, infrastructure). 18–28 tasks with 3-point estimates and dependency graph.</div>
+      </div>
+      <div class="arch-step">
+        <div class="arch-tag">[ SCHEDULE ]</div>
+        <div class="arch-title">Beta-PERT</div>
+        <div class="arch-file">pert.py</div>
+        <div class="arch-desc">Beta distribution fitting, sampling, CDF, percentiles. Vectorized for MC efficiency.</div>
+      </div>
+      <div class="arch-step">
+        <div class="arch-tag">[ SCHEDULE ]</div>
+        <div class="arch-title">CPM Engine</div>
+        <div class="arch-file">cpm.py</div>
+        <div class="arch-desc">NetworkX DAG. Forward + backward pass. Float computation. Critical path extraction via longest-path algorithm.</div>
+      </div>
+      <div class="arch-step">
+        <div class="arch-tag">[ RISK ]</div>
+        <div class="arch-title">Monte Carlo + VaR</div>
+        <div class="arch-file">monte_carlo.py · sensitivity.py</div>
+        <div class="arch-desc">10k CPM runs. Criticality index. Cost VaR/CVaR. Spearman tornado chart. Fully reproducible.</div>
+      </div>
+      <div class="arch-step">
+        <div class="arch-tag">[ UI ]</div>
+        <div class="arch-title">Dashboard</div>
+        <div class="arch-file">app.py</div>
+        <div class="arch-desc">Streamlit: Gantt, distributions, criticality bars, sensitivity tornado, full risk register table.</div>
+      </div>
+    </div>
+    <div style="margin-top:1.5rem;background:var(--paper);border:1px solid var(--border);padding:1.2rem 1.5rem;font-family:var(--mono);font-size:.7rem;color:var(--ink3);line-height:1.9">
+      <span style="color:var(--green-l)">45 unit tests</span> ·
+      PERT mean/std formula · sample bounds · CDF monotonicity ·
+      CPM sequential chain = Σ durations · parallel paths = max branch ·
+      float = 0 on critical path · Monte Carlo P90 ≥ P50 ≥ P10 ·
+      criticality ∈ [0,1] · predecessor ordering validation ·
+      GitHub Actions CI (Python 3.10 & 3.11)
+    </div>
+  </div>
+</section>
+
+<hr class="rule">
+
+<!-- QUICKSTART -->
+<section id="quickstart">
+  <div class="container">
+    <div class="eyebrow">Usage</div>
+    <h2>Running in 3 steps</h2>
+    <div class="qs-grid reveal">
+      <div class="qs-card">
+        <div class="qs-num">01 — INSTALL</div>
+        <h3>Setup</h3>
+        <pre><span class="c"># Clone the repository</span>
+<span class="g">git</span> clone https://github.com/
+  alaaeddinethr/construction-risk
+<span class="g">cd</span> construction-risk
+
+<span class="c"># Install dependencies</span>
+<span class="g">pip</span> install <span class="y">-r</span> requirements.txt
+
+<span class="c"># Run test suite</span>
+<span class="g">pytest</span> tests/ <span class="y">-v</span></pre>
+      </div>
+      <div class="qs-card">
+        <div class="qs-num">02 — SIMULATE</div>
+        <h3>Run analysis</h3>
+        <pre><span class="c"># Generate project</span>
+<span class="g">python</span> src/data/project_generator.py \
+  <span class="y">--type</span> residential \
+  <span class="y">--output</span> data/project.json
+
+<span class="c"># Run CPM</span>
+<span class="g">python</span> src/schedule/cpm.py
+
+<span class="c"># Monte Carlo (10k sim)</span>
+<span class="g">python</span> src/risk/monte_carlo.py \
+  <span class="y">--simulations</span> 10000</pre>
+      </div>
+      <div class="qs-card">
+        <div class="qs-num">03 — DASHBOARD</div>
+        <h3>Interactive view</h3>
+        <pre><span class="c"># Launch Streamlit</span>
+<span class="g">streamlit</span> run \
+  src/dashboard/app.py
+
+<span class="c"># Open browser</span>
+<span class="b">→ http://localhost:8501</span>
+
+<span class="c"># Choose project type,</span>
+<span class="c"># set simulations,</span>
+<span class="c"># click Run</span></pre>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="rule">
+
+<!-- AUTHOR -->
+<section id="author">
+  <div class="container">
+    <div class="eyebrow">Author</div>
+    <h2>About this project</h2>
+    <div class="author-grid reveal">
+      <div>
+        <div class="author-card">
+          <div class="author-initials">AE</div>
+          <div class="author-name">Alaa Eddine TAHIR</div>
+          <div class="author-role">Arts et Métiers ParisTech · Metz &amp; Rabat</div>
+          <div>
+            <a href="https://linkedin.com/in/alaaeddine-tahir" class="author-link" target="_blank">↗ LinkedIn</a>
+            <a href="https://github.com/alaaeddinethr" class="author-link" target="_blank">↗ GitHub</a>
+            <a href="https://github.com/alaaeddinethr/construction-risk" class="author-link" target="_blank">↗ Repository</a>
+          </div>
+        </div>
+      </div>
+      <div class="author-bio">
+        <p>Engineering student at Arts et Métiers ParisTech with a double competency in mechanical/industrial engineering and quantitative finance (MSc Financial Engineering — WorldQuant University, in progress).</p>
+        <p>This project is the intersection of both disciplines: construction project management from the field, and quantitative risk modelling from financial engineering. The Beta-PERT and Monte Carlo methods are identical in structure to financial derivatives pricing — the domain changes, the mathematics doesn't.</p>
+        <div class="badge kac">
+          🏗️ <span><strong>KA2C Construction, Casablanca — Stage Ingénieur 2025</strong><br>
+          Suivi de chantiers TCE · coordination des corps d'état · contrôle d'avancement ·
+          normes HSE · optimisation des flux de matériaux et main-d'œuvre.</span>
+        </div>
+        <div class="badge hack">
+          🥉 <span><strong>MTI Hackathon 2025 — 3rd place nationally</strong><br>
+          See also: Bearing Fault Detection · OEE Dashboard · Quant Risk Engine.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div>construction-risk · alaaeddinethr · MIT License · 45 tests passing</div>
+  <div style="display:flex;gap:2rem">
+    <a href="https://github.com/alaaeddinethr/construction-risk" target="_blank">GitHub ↗</a>
+    <a href="https://linkedin.com/in/alaaeddine-tahir" target="_blank">LinkedIn ↗</a>
+  </div>
+</footer>
+
+<script>
+const obs = new IntersectionObserver(entries=>{
+  entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('visible');obs.unobserve(e.target);}});
+},{threshold:.12});
+document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));
+</script>
+</body>
+</html>
