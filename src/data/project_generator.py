@@ -19,8 +19,11 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 # ─── Data model ───────────────────────────────────────────────────────────────
 
@@ -61,10 +64,33 @@ class Project:
     deadline_days: int | None = None   # contractual deadline
     budget: float | None = None        # contractual budget
 
+    def __post_init__(self) -> None:
+        # By default the contract commits to the deterministic plan built from
+        # most-likely estimates, as a planner without risk analysis would.
+        if self.deadline_days is None:
+            self.deadline_days = round(self.planned_duration)
+        if self.budget is None:
+            self.budget = round(self.planned_cost, -3)
+
+    def _cpm_duration(self, durations: dict[str, float]) -> float:
+        from src.schedule.cpm import CPMScheduler
+
+        tasks = [asdict(t) for t in self.tasks]
+        return CPMScheduler(tasks, durations=durations).compute().project_duration
+
+    @property
+    def planned_duration(self) -> float:
+        """Critical-path length with most-likely durations (deterministic plan)."""
+        return self._cpm_duration({t.id: t.duration_most_likely for t in self.tasks})
+
+    @property
+    def planned_cost(self) -> float:
+        return sum(t.cost_most_likely for t in self.tasks)
+
     @property
     def baseline_duration(self) -> float:
-        """Sum of PERT durations along critical path (approximation)."""
-        return sum(t.duration_pert for t in self.tasks)
+        """Critical-path length with PERT mean durations."""
+        return self._cpm_duration({t.id: t.duration_pert for t in self.tasks})
 
     @property
     def baseline_cost(self) -> float:
@@ -128,8 +154,6 @@ def build_residential() -> Project:
         project_type="residential",
         description="Immeuble résidentiel de 3 étages, 12 appartements, Casablanca",
         tasks=tasks,
-        deadline_days=200,
-        budget=2_600_000,
     )
     return p
 
@@ -171,8 +195,6 @@ def build_commercial() -> Project:
         project_type="commercial",
         description="Immeuble de bureaux 3 niveaux, 2400m², parking souterrain",
         tasks=tasks,
-        deadline_days=380,
-        budget=1_200_000,
     )
 
 
@@ -207,8 +229,6 @@ def build_infrastructure() -> Project:
         project_type="infrastructure",
         description="VRD et ouvrages d'art, 3.2km de voirie, zone industrielle",
         tasks=tasks,
-        deadline_days=300,
-        budget=1_050_000,
     )
 
 
@@ -240,6 +260,6 @@ if __name__ == "__main__":
         json.dump(project.to_dict(), f, ensure_ascii=False, indent=2)
 
     print(f"✅ Project '{project.name}' generated: {len(project.tasks)} tasks")
-    print(f"   Baseline duration (PERT): {project.baseline_duration:.1f} days")
-    print(f"   Baseline cost (PERT):     €{project.baseline_cost:,.0f}")
+    print(f"   Plan (most likely):       {project.planned_duration:.0f} days, €{project.planned_cost:,.0f}")
+    print(f"   Baseline (PERT means):    {project.baseline_duration:.1f} days, €{project.baseline_cost:,.0f}")
     print(f"   Saved to: {args.output}")
