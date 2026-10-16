@@ -24,18 +24,16 @@ from __future__ import annotations
 
 import argparse
 import json
-from dataclasses import dataclass, field
+import sys
+from dataclasses import dataclass
 from pathlib import Path
 
 import numpy as np
-import pandas as pd
 
-import sys
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from src.schedule.pert import PERTEstimate, pert_from_task
 from src.schedule.cpm import CPMScheduler
-
+from src.schedule.pert import PERTEstimate, pert_from_task
 
 # ─── Simulation Result ────────────────────────────────────────────────────────
 
@@ -107,7 +105,7 @@ class SimulationResult:
         print(f"\n{'═'*58}")
         print(f"  MONTE CARLO RISK REPORT — {self.n_simulations:,} simulations")
         print(f"{'═'*58}")
-        print(f"  SCHEDULE RISK")
+        print("  SCHEDULE RISK")
         print(f"  {'─'*50}")
         print(f"  Baseline:   {bd:>7.1f} days")
         print(f"  P50:        {s['p50_duration']:>7.1f} days  (+{s['p50_duration']-bd:.1f}d)")
@@ -116,7 +114,7 @@ class SimulationResult:
         print(f"  P95:        {s['p95_duration']:>7.1f} days  (+{s['p95_duration']-bd:.1f}d)")
         if self.deadline:
             print(f"  P(on time): {s['prob_on_time']*100:>7.1f}%  (deadline: {self.deadline:.0f}d)")
-        print(f"\n  COST RISK")
+        print("\n  COST RISK")
         print(f"  {'─'*50}")
         print(f"  Baseline:   €{bc:>12,.0f}")
         print(f"  P50:        €{s['p50_cost']:>12,.0f}  (+€{s['p50_cost']-bc:,.0f})")
@@ -124,7 +122,7 @@ class SimulationResult:
         print(f"  Cost VaR95: €{s['cost_var_95_eur']:>12,.0f}  (+{s['cost_var_95_pct']:.1f}%)")
         if self.budget:
             print(f"  P(in budget): {s['prob_within_budget']*100:.1f}%  (budget: €{self.budget:,.0f})")
-        print(f"\n  TOP CRITICAL TASKS (criticality index)")
+        print("\n  TOP CRITICAL TASKS (criticality index)")
         print(f"  {'─'*50}")
         for tid, ci in self.top_critical_tasks(5):
             bar = "█" * int(ci * 25)
