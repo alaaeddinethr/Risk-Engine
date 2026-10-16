@@ -15,18 +15,18 @@ Run:
 
 import sys
 from pathlib import Path
+
 import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
-import plotly.express as px
 import streamlit as st
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 from src.data.project_generator import generate_project
-from src.schedule.pert import PERTEstimate
-from src.schedule.cpm import CPMScheduler
 from src.risk.monte_carlo import MonteCarloEngine
 from src.risk.sensitivity import SensitivityAnalyzer
+from src.schedule.cpm import CPMScheduler
+from src.schedule.pert import PERTEstimate
 
 # ─── Page config ─────────────────────────────────────────────────────────────
 st.set_page_config(
@@ -159,7 +159,7 @@ var95c = result.cost_var(0.95)
 pot = result.prob_on_time()
 
 c1,c2,c3,c4,c5,c6 = st.columns(6)
-with c1: kpi("Baseline Duration", f"{bd:.0f}d", f"CPM PERT means", "blue")
+with c1: kpi("Baseline Duration", f"{bd:.0f}d", "CPM PERT means", "blue")
 with c2: kpi("P50 Completion", f"{p50d:.0f}d", f"+{p50d-bd:.0f}d vs baseline", "amber")
 with c3: kpi("P90 Completion", f"{p90d:.0f}d", f"+{p90d-bd:.0f}d vs baseline", "red")
 with c4: kpi("P(On Time)", f"{pot*100:.0f}%" if not np.isnan(pot) else "N/A",

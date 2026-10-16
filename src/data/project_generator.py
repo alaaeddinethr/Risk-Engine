@@ -19,10 +19,8 @@ from __future__ import annotations
 
 import argparse
 import json
-from dataclasses import dataclass, field, asdict
+from dataclasses import asdict, dataclass, field
 from pathlib import Path
-from typing import Optional
-
 
 # ─── Data model ───────────────────────────────────────────────────────────────
 
@@ -60,8 +58,8 @@ class Project:
     project_type: str
     description: str
     tasks: list[Task]
-    deadline_days: Optional[int] = None   # contractual deadline
-    budget: Optional[float] = None        # contractual budget
+    deadline_days: int | None = None   # contractual deadline
+    budget: float | None = None        # contractual budget
 
     @property
     def baseline_duration(self) -> float:
