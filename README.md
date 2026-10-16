@@ -76,16 +76,13 @@ construction-risk/
 │   │
 │   ├── risk/
 │   │   ├── monte_carlo.py         # Monte Carlo schedule + cost simulation engine
-│   │   ├── var.py                 # Cost Overrun VaR / CVaR
 │   │   └── sensitivity.py         # Tornado chart, Spearman correlation analysis
 │   │
 │   └── dashboard/
 │       └── app.py                 # Streamlit interactive dashboard
 │
 ├── tests/
-│   ├── test_pert.py
-│   ├── test_cpm.py
-│   └── test_montecarlo.py
+│   └── test_all.py
 │
 ├── .github/workflows/ci.yml
 ├── config.yaml

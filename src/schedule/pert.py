@@ -27,9 +27,10 @@ Reference:
 
 from __future__ import annotations
 
+from dataclasses import dataclass
+
 import numpy as np
 from scipy import stats
-from dataclasses import dataclass
 
 
 @dataclass
@@ -77,7 +78,6 @@ class PERTEstimate:
     def beta(self) -> float:
         """Beta shape parameter β."""
         mu = self.mean
-        rng = self.pessimistic - self.optimistic
         return self.alpha * (self.pessimistic - mu) / (mu - self.optimistic)
 
     def sample(

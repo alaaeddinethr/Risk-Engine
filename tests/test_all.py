@@ -1,17 +1,18 @@
 """
 Test suite — PERT, CPM, Monte Carlo
 """
-import numpy as np
-import pytest
 import sys
 from pathlib import Path
+
+import numpy as np
+import pytest
+
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from src.schedule.pert import PERTEstimate, pert_from_task
-from src.schedule.cpm import CPMScheduler, CPMResult
+from src.data.project_generator import generate_project
 from src.risk.monte_carlo import MonteCarloEngine
-from src.data.project_generator import generate_project, Task
-
+from src.schedule.cpm import CPMResult, CPMScheduler
+from src.schedule.pert import PERTEstimate, pert_from_task
 
 # ═══ PERT TESTS ══════════════════════════════════════════════════════════════
 
