@@ -161,9 +161,11 @@ class MonteCarloEngine:
             self.duration_perts[t["id"]] = pert_from_task(t, "duration")
             self.cost_perts[t["id"]]     = pert_from_task(t, "cost")
 
-        # Baseline values (PERT means)
-        self.baseline_duration = sum(p.mean for p in self.duration_perts.values())
-        self.baseline_cost     = sum(p.mean for p in self.cost_perts.values())
+        # Baseline values: critical path with PERT mean durations (a plain sum
+        # would add up parallel tasks), and total of PERT mean costs.
+        self.baseline_duration, _ = self._run_single(
+            {tid: p.mean for tid, p in self.duration_perts.items()})
+        self.baseline_cost = sum(p.mean for p in self.cost_perts.values())
 
     def _run_single(self, sampled_durations: dict[str, float]) -> tuple[float, list[str]]:
         """

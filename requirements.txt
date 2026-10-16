@@ -5,6 +5,7 @@ networkx>=3.2
 PyYAML>=6.0
 streamlit>=1.35
 plotly>=5.20
+matplotlib>=3.8
 
 # Dev / Testing
 pytest>=8.0

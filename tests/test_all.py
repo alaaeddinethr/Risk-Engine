@@ -296,6 +296,23 @@ class TestProjectGenerator:
                 assert t.duration_pert > 0
                 assert t.cost_pert > 0
 
+    def test_baseline_follows_critical_path_not_sum(self):
+        """Regression: parallel tasks must not be added up in the baseline."""
+        p = generate_project("residential")
+        assert p.baseline_duration < sum(t.duration_pert for t in p.tasks)
+        engine = make_mc_engine("residential", n_sim=200)
+        assert engine.baseline_duration == pytest.approx(p.baseline_duration)
+        # The PERT baseline must sit inside the simulated distribution.
+        res = engine.run()
+        assert res.duration_percentile(0.05) <= res.baseline_duration <= res.duration_percentile(0.95)
+
+    def test_default_contract_is_most_likely_plan(self):
+        for t in ["residential", "commercial", "infrastructure"]:
+            p = generate_project(t)
+            assert p.deadline_days == round(p.planned_duration)
+            assert p.budget == round(p.planned_cost, -3)
+            assert p.planned_duration <= p.baseline_duration
+
     def test_task_order_valid(self):
         """Predecessors must be defined before dependents."""
         p = generate_project("residential")
