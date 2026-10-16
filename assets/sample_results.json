@@ -1,0 +1,32 @@
+{
+  "residential": {
+    "tasks": 18,
+    "plan_days": 138,
+    "p50_days": 144.5,
+    "p90_days": 153.3,
+    "prob_on_time": 0.162,
+    "plan_budget_eur": 436000,
+    "p90_cost_eur": 471000.0,
+    "prob_within_budget": 0.124
+  },
+  "commercial": {
+    "tasks": 28,
+    "plan_days": 186,
+    "p50_days": 196.6,
+    "p90_days": 206.5,
+    "prob_on_time": 0.077,
+    "plan_budget_eur": 1072000,
+    "p90_cost_eur": 1155000.0,
+    "prob_within_budget": 0.096
+  },
+  "infrastructure": {
+    "tasks": 22,
+    "plan_days": 136,
+    "p50_days": 146.1,
+    "p90_days": 155.7,
+    "prob_on_time": 0.075,
+    "plan_budget_eur": 856000,
+    "p90_cost_eur": 944500.0,
+    "prob_within_budget": 0.081
+  }
+}

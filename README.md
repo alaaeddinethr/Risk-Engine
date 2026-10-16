@@ -1,143 +1,81 @@
-# 🏗️ Construction Project Risk Dashboard
+# Construction Project Risk Engine
 
-<div align="center">
+Quantifies schedule and cost risk on construction projects: three-point estimates per task, Monte Carlo simulation through the critical path, probability of meeting the deadline and budget, and the tasks that drive the delay.
 
-![Python](https://img.shields.io/badge/Python-3.10+-blue?style=flat-square&logo=python)
-![Streamlit](https://img.shields.io/badge/Streamlit-1.35-red?style=flat-square&logo=streamlit)
-![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)
-![CI](https://img.shields.io/github/actions/workflow/status/alaaeddinethr/construction-risk/ci.yml?style=flat-square&label=CI)
+[![CI](https://github.com/alaaeddinethr/Risk-Engine/actions/workflows/ci.yml/badge.svg)](https://github.com/alaaeddinethr/Risk-Engine/actions/workflows/ci.yml)
+![Python](https://img.shields.io/badge/Python-3.10+-blue)
+![License](https://img.shields.io/badge/License-MIT-green)
 
-**Quantitative risk engine for construction projects — Monte Carlo schedule simulation,
-Cost Overrun VaR, critical path analysis, and sensitivity analysis.**
+## The problem
 
-[Live Demo](#) · [Documentation](#architecture) · [Quickstart](#quickstart)
+A site schedule is usually built by adding up the *most likely* duration of each task along the critical path. That plan is almost never met, for two reasons:
 
-</div>
+1. Task durations are skewed: a task can finish a little early but very late, so the average is longer than the most likely value.
+2. When several paths run in parallel and merge (structure, then MEP trades, then finishes), the project waits for the slowest one. Any of them slipping delays everything ("merge bias").
 
----
+Large projects routinely overrun: Flyvbjerg (2014) reports that nine out of ten megaprojects exceed their budget. This engine puts a number on that risk before work starts.
 
-## 📌 Context & Motivation
+## Results
 
-Construction projects are among the most risk-prone endeavors in engineering:
-- **90%** of large projects experience cost overruns (McKinsey, 2017)
-- Average delay: **+20 months** on major infrastructure projects
-- Average cost overrun: **+80%** of original budget
+Three sample projects (18 to 28 tasks), 10,000 simulations each. The contract is set to the deterministic most-likely plan, as a planner without risk analysis would. Reproduce with `python scripts/make_readme_figures.py`.
 
-This project applies **quantitative finance methods** (Monte Carlo, VaR, sensitivity analysis)
-to construction project risk — a domain where these tools are standard in theory but
-rarely implemented rigorously in practice.
+![Schedule risk distribution and criticality](assets/schedule_risk.png)
 
-Built on experience from a site engineering internship at **KA2C Construction, Casablanca (2025)**:
-coordinating multi-trade execution, tracking progress, managing schedule constraints and HSE.
+| Project | Plan | P50 | P90 | P(on time) | P(within budget) |
+|---|---|---|---|---|---|
+| Residential building, 18 tasks | 138 d | 144 d | 153 d | **16 %** | 12 % |
+| Office complex, 28 tasks | 186 d | 197 d | 207 d | **8 %** | 10 % |
+| Infrastructure, 22 tasks | 136 d | 146 d | 156 d | **8 %** | 8 % |
 
----
+**What this tells a project manager:** the most-likely plan has less than a one-in-five chance of being met. To commit to a date with 90 % confidence on the residential building, 15 working days of schedule contingency are needed. Electrical works sit on the critical path in 75 % of scenarios and plumbing in 23 %: those two trades are where to secure crews and supplies first. The more tasks run in parallel (the office complex), the lower the chance of meeting the plan.
 
-## 🔧 Core Methods
+## Method
 
-### Beta-PERT Distribution
-Task durations are modelled with the Beta-PERT distribution, standard in project risk:
-```
-μ_PERT = (Optimistic + 4 × Most_Likely + Pessimistic) / 6
-σ_PERT = (Pessimistic - Optimistic) / 6
-```
+| Step | What it does |
+|---|---|
+| **Beta-PERT** | Each task gets optimistic, most likely and pessimistic durations and costs. Mean = (O + 4M + P) / 6. Sampling uses the Beta-PERT distribution. |
+| **Critical path (CPM)** | Forward and backward pass on the dependency graph, total float per task. The baseline is the critical-path length with PERT means. |
+| **Monte Carlo** | 10,000 scenarios: sample every task, recompute the critical path, record project duration, cost and which tasks were critical. |
+| **Risk indicators** | P50/P80/P90 dates, probability of meeting deadline and budget, cost-overrun VaR (P95 cost − baseline), criticality index per task. |
+| **Sensitivity** | Spearman correlation between each task's duration and the project duration (tornado chart in the dashboard). |
 
-### Monte Carlo Schedule Simulation
-- Samples 10,000 project execution scenarios
-- Each scenario draws independent PERT-distributed durations for all tasks
-- Propagates through the dependency graph (CPM)
-- Outputs: P10/P50/P90 completion dates, probability of meeting deadline
-
-### Cost Overrun VaR
-Applies Value-at-Risk methodology to project cost:
-```
-CostVaR_95 = P95(simulated_cost) − baseline_cost
-```
-The same framework used for financial portfolio risk — applied to construction budgets.
-
-### Critical Path Analysis
-- Deterministic CPM (Critical Path Method)
-- Probabilistic criticality index: P(task is on critical path across all simulations)
-- Schedule sensitivity: correlation of task duration with total project duration
-
----
-
-## 🏗️ Architecture
+## Project structure
 
 ```
-construction-risk/
-│
-├── src/
-│   ├── data/
-│   │   └── project_generator.py   # Synthetic project generator (TCE, residential, infra)
-│   │
-│   ├── schedule/
-│   │   ├── pert.py                # Beta-PERT distribution, 3-point estimates
-│   │   └── cpm.py                 # Critical Path Method, float computation
-│   │
-│   ├── risk/
-│   │   ├── monte_carlo.py         # Monte Carlo schedule + cost simulation engine
-│   │   └── sensitivity.py         # Tornado chart, Spearman correlation analysis
-│   │
-│   └── dashboard/
-│       └── app.py                 # Streamlit interactive dashboard
-│
-├── tests/
-│   └── test_all.py
-│
-├── .github/workflows/ci.yml
-├── config.yaml
-└── requirements.txt
+src/
+├── data/project_generator.py   # residential, commercial and infrastructure sample projects
+├── schedule/
+│   ├── pert.py                 # Beta-PERT estimates and sampling
+│   └── cpm.py                  # critical path method, floats
+├── risk/
+│   ├── monte_carlo.py          # schedule and cost simulation
+│   └── sensitivity.py          # Spearman sensitivity, tornado data
+└── dashboard/app.py            # Streamlit dashboard
+scripts/make_readme_figures.py
+tests/test_all.py               # 47 unit tests
 ```
 
----
-
-## 📊 Sample Results
-
-On a simulated 18-task residential building project (TCE):
-
-| Metric | Value |
-|--------|-------|
-| Baseline duration | 180 days |
-| P50 completion | 198 days |
-| P90 completion | 224 days |
-| P(on time) | 18.4% |
-| Baseline cost | €2,400,000 |
-| P50 final cost | €2,574,000 |
-| Cost VaR 95% | +€312,000 (+13.0%) |
-| Top risk task | Structural works (criticality: 87%) |
-
----
-
-## 🚀 Quick Start
+## Run it
 
 ```bash
-git clone https://github.com/alaaeddinethr/construction-risk.git
-cd construction-risk
 pip install -r requirements.txt
-
-# Generate a sample project
-python src/data/project_generator.py --type residential --tasks 18
-
-# Run Monte Carlo simulation
+python src/data/project_generator.py --type residential --output data/project.json
 python src/risk/monte_carlo.py --project data/project.json --simulations 10000
-
-# Launch dashboard
 streamlit run src/dashboard/app.py
+pytest tests
 ```
 
+## Limitations
+
+- Task durations are sampled independently. In reality bad weather or a late supplier hits several tasks at once; correlated sampling would widen the distribution further, so these probabilities are optimistic.
+- Costs are not yet linked to duration (a late task also costs more in labour and equipment).
+
+## References
+
+- Flyvbjerg, B. (2014). What you should know about megaprojects and why. *Project Management Journal*, 45(2).
+- Vose, D. (2008). *Risk Analysis: A Quantitative Guide*. Wiley.
+- Malcolm, D. G. et al. (1959). Application of a technique for research and development program evaluation. *Operations Research*, 7(5).
+
 ---
 
-## 📚 References
-
-- [1] PMI (2017). *A Guide to the Project Management Body of Knowledge (PMBOK® Guide)*. 6th Ed.
-- [2] Vose, D. (2008). *Risk Analysis: A Quantitative Guide*. Wiley.
-- [3] Bent Flyvbjerg (2014). *What You Should Know About Megaprojects*. Project Management Journal.
-- [4] Malcolm, D.G. et al. (1959). *Application of a Technique for R&D Program Evaluation (PERT)*. Operations Research.
-
----
-
-## 👤 Author
-
-**Alaa Eddine TAHIR** — Engineering student at Arts et Métiers ParisTech
-Site engineering internship at KA2C Construction, Casablanca (Jul–Aug 2025).
-[LinkedIn](https://linkedin.com/in/alaaeddine-tahir) · [GitHub](https://github.com/alaaeddinethr)
+Alaa Eddine Tahir, engineering student at Arts et Métiers. Built after a site engineering internship at KA2C Construction, Casablanca (2025). [LinkedIn](https://linkedin.com/in/alaaeddine-tahir)
